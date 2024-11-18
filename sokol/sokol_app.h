@@ -3126,6 +3126,7 @@ _SOKOL_PRIVATE sapp_desc _sapp_desc_defaults(const sapp_desc* desc) {
 // DKDEMO: I just put this stuff here to make it easy on myself. These should be broken up and put elsewhere
 EM_JS(void, _dk_grab_canvas, (char* selector), {
     if (Module.canvas) {
+        console.log('canvas set with param', Module.canvas);
         return;
     }
     const e = document.querySelector(UTF8ToString(selector));
