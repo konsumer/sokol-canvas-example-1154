@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>sokol multiple canvas</title>
+	<link rel="icon" type="image/x-icon" href="https://avatars.githubusercontent.com/u/10213618" />
+	<style type="text/css">
+		body {
+			font-family: sans-serif;
+			background: black;
+			color: white;
+			display:flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+		p {
+			margin: 20px;
+			max-width: 960px;
+		}
+		a {
+			color: inherit;
+		}
+	</style>
+</head>
+<body>
+
+<p>This is an example of multiple canvas instances being used for sokol, in emscripten (see <a href="https://github.com/floooh/sokol/issues/1154">this issues</a>).</p>
+<p>Here, each of these web-component instances has their own copy of the example, as well as their own canvas.</p>
+
+<sokol-example></sokol-example>
+<sokol-example></sokol-example>
+
+<script type="module" src="example.js"></script>
+
+Original behavior:
+
+<canvas id="canvas"></canvas>
+<script type="module">
+	import setup from './sokol-canvas-example-1154.mjs'
+	setup()
+</script>
+
+</body>
+</html>
