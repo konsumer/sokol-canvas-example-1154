@@ -3135,7 +3135,7 @@ EM_JS(void, _dk_grab_canvas, (char* selector), {
         Module.canvas = e;
     }
 
-    // TODO: Here you could even create a canvas or whatever
+    // TODO: Here you could even create a canvas or whatever, if no e is setup
 
     console.log('canvas set', Module.canvas);
 });
@@ -5204,12 +5204,23 @@ _SOKOL_PRIVATE uint32_t _sapp_emsc_touch_event_mods(const EmscriptenTouchEvent* 
 _SOKOL_PRIVATE void _sapp_emsc_wgpu_size_changed(void);
 #endif
 
+// DKDEMO: this could be more integrated. Just here to make it easy
+EM_JS(void, _dk_sapp_get_canvas_size, (double* w, double* h), {
+    Module.HEAPF64[w/8] = Module.canvas.offsetWidth;
+    Module.HEAPF64[w/8] = Module.canvas.offsetHeight;
+})
+
+EM_JS(void, _dk_sapp_set_canvas_size, (int w, int h), {
+    Module.canvas.width = w;
+    Module.canvas.height = h;
+})
+
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
     _SOKOL_UNUSED(event_type);
     _SOKOL_UNUSED(user_data);
     double w, h;
-    // TODO: DK - update this to use Module.canvas
-    emscripten_get_element_css_size(_sapp.html5_canvas_selector, &w, &h);
+    _dk_sapp_get_canvas_size(&w, &h);
+    // emscripten_get_element_css_size(_sapp.html5_canvas_selector, &w, &h);
     /* The above method might report zero when toggling HTML5 fullscreen,
        in that case use the window's inner width reported by the
        emscripten event. This works ok when toggling *into* fullscreen
@@ -5248,7 +5259,10 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_size_changed(int event_type, const EmscriptenU
     _sapp.framebuffer_width = (int)roundf(w * _sapp.dpi_scale);
     _sapp.framebuffer_height = (int)roundf(h * _sapp.dpi_scale);
     SOKOL_ASSERT((_sapp.framebuffer_width > 0) && (_sapp.framebuffer_height > 0));
-    emscripten_set_canvas_element_size(_sapp.html5_canvas_selector, _sapp.framebuffer_width, _sapp.framebuffer_height);
+    
+    // emscripten_set_canvas_element_size(_sapp.html5_canvas_selector, _sapp.framebuffer_width, _sapp.framebuffer_height);
+    _dk_sapp_set_canvas_size(_sapp.framebuffer_width, _sapp.framebuffer_height);
+
     #if defined(SOKOL_WGPU)
         // on WebGPU: recreate size-dependent rendering surfaces
         _sapp_emsc_wgpu_size_changed();
