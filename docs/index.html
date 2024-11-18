@@ -27,18 +27,23 @@
 <body>
 
 <p>This is an example of multiple canvas instances being used for sokol, in emscripten (see <a href="https://github.com/floooh/sokol/issues/1154">this issues</a>).</p>
-<p>Here, each of these web-component instances has their own copy of the example, as well as their own canvas.</p>
+
+<p>2 seperate web-components with their own context:</p>
 
 <sokol-example></sokol-example>
 <sokol-example></sokol-example>
 
 <script type="module" src="example.js"></script>
 
-Original behavior:
+<p>Original behavior using default:</p>
 
 <canvas id="canvas"></canvas>
+<canvas id="canvas2"></canvas>
+<canvas id="canvas3"></canvas>
 <script type="module">
 	import setup from './sokol-canvas-example-1154.mjs'
+	
+	// default uses #canvas, but in C, you could also hardcode your id/query-selector
 	setup()
 </script>
 
