@@ -3123,7 +3123,8 @@ _SOKOL_PRIVATE sapp_desc _sapp_desc_defaults(const sapp_desc* desc) {
     return res;
 }
 
-// DKDEMO: I just put this stuff here to make it easy on myself. These should be broken up and put elsewhere
+#if EMSCRIPTEN
+// DKDEMO: I just put this stuff here to make it easy on myself. These should be broken up and put elsewhere, and added directly to _sapp_init_state
 EM_JS(void, _dk_grab_canvas, (char* selector), {
     if (Module.canvas) {
         console.log('canvas set with param', Module.canvas);
@@ -3138,6 +3139,7 @@ EM_JS(void, _dk_grab_canvas, (char* selector), {
 
     console.log('canvas set', Module.canvas);
 });
+#endif
 
 _SOKOL_PRIVATE void _sapp_init_state(const sapp_desc* desc) {
     SOKOL_ASSERT(desc);
@@ -3181,7 +3183,9 @@ _SOKOL_PRIVATE void _sapp_init_state(const sapp_desc* desc) {
     _sapp.mouse.shown = true;
     _sapp_timing_init(&_sapp.timing);
 
+    #if EMSCRIPTEN
     _dk_grab_canvas(_sapp.html5_canvas_selector);
+    #endif
 }
 
 _SOKOL_PRIVATE void _sapp_discard_state(void) {
