@@ -4932,8 +4932,7 @@ _SOKOL_PRIVATE void _sapp_emsc_set_clipboard_string(const char* str) {
 
 EM_JS(void, sapp_js_add_dragndrop_listeners, (const char* canvas_selector_cstr), {
     Module.sokol_drop_files = [];
-    const canvas_selector = UTF8ToString(canvas_selector_cstr);
-    const canvas = Module.canvas || document.querySelector(canvas_selector);
+    const canvas = Module.canvas;
     Module.sokol_dragenter = (event) => {
         event.stopPropagation();
         event.preventDefault();
@@ -5006,8 +5005,7 @@ EM_JS(void, sapp_js_fetch_dropped_file, (int index, _sapp_html5_fetch_callback c
 });
 
 EM_JS(void, sapp_js_remove_dragndrop_listeners, (const char* canvas_selector_cstr), {
-    const canvas_selector = UTF8ToString(canvas_name_cstr);
-    const canvas = Modules.canvas || document.querySelector(canvas_selector);
+    const canvas = Modules.canvas;
     canvas.removeEventListener('dragenter', Module.sokol_dragenter);
     canvas.removeEventListener('dragleave', Module.sokol_dragleave);
     canvas.removeEventListener('dragover',  Module.sokol_dragover);
@@ -5016,22 +5014,20 @@ EM_JS(void, sapp_js_remove_dragndrop_listeners, (const char* canvas_selector_cst
 
 // return true if the selector needs to be modified
 EM_JS(void, sapp_js_init, (const char* canvas_selector_cstr), {
-    // TODO: we don't really need Module.sapp_emsc_target and Module.canvas. Just Module.canvas would be better
     if (Module.canvas) {
-        specialHTMLTargets["!canvas"] = Module.sapp_emsc_target = Module.canvas;
+        specialHTMLTargets["!canvas"] = Module.canvas;
         stringToUTF8("!canvas", canvas_selector_cstr, 8);
         return;
     }
     
     // lookup and store canvas object by name
     const canvas_selector = UTF8ToString(canvas_selector_cstr);
-    Module.sapp_emsc_target = document.querySelector(canvas_selector);
-    Module.canvas = Module.sapp_emsc_target;
+    Module.canvas = document.querySelector(canvas_selector);
 
-    if (!Module.sapp_emsc_target) {
+    if (!Module.canvas) {
         console.log("sokol_app.h: invalid target:" + canvas_selector);
     }
-    if (!Module.sapp_emsc_target.requestPointerLock) {
+    if (!Module.canvas.requestPointerLock) {
         console.log("sokol_app.h: target doesn't support requestPointerLock:" + canvas_selector);
     }
 });
@@ -5053,9 +5049,9 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_pointerlockerror_cb(int emsc_type, const void*
 }
 
 EM_JS(void, sapp_js_request_pointerlock, (void), {
-    if (Module.sapp_emsc_target) {
-        if (Module.sapp_emsc_target.requestPointerLock) {
-            Module.sapp_emsc_target.requestPointerLock();
+    if (Module.canvas) {
+        if (Module.canvas.requestPointerLock) {
+            Module.canvas.requestPointerLock();
         }
     }
 });
@@ -5090,7 +5086,7 @@ _SOKOL_PRIVATE void _sapp_emsc_update_mouse_lock_state(void) {
 
 // set mouse cursor type
 EM_JS(void, sapp_js_set_cursor, (int cursor_type, int shown), {
-    if (Module.sapp_emsc_target) {
+    if (Module.canvas) {
         let cursor;
         if (shown === 0) {
             cursor = "none";
@@ -5109,7 +5105,7 @@ EM_JS(void, sapp_js_set_cursor, (int cursor_type, int shown), {
             case 10: cursor = "not-allowed"; break; // SAPP_MOUSECURSOR_NOT_ALLOWED
             default: cursor = "auto"; break;
         }
-        Module.sapp_emsc_target.style.cursor = cursor;
+        Module.canvas.style.cursor = cursor;
     }
 });
 
