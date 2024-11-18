@@ -3123,24 +3123,6 @@ _SOKOL_PRIVATE sapp_desc _sapp_desc_defaults(const sapp_desc* desc) {
     return res;
 }
 
-#if EMSCRIPTEN
-// DKDEMO: I just put this stuff here to make it easy on myself. These should be broken up and put elsewhere, and added directly to _sapp_init_state
-EM_JS(void, _dk_grab_canvas, (char* selector), {
-    if (Module.canvas) {
-        console.log('canvas set with param', Module.canvas);
-        return;
-    }
-    const e = document.querySelector(UTF8ToString(selector));
-    if (e) {
-        Module.canvas = e;
-    }
-
-    // TODO: Here you could even create a canvas or whatever, if no e is setup
-
-    console.log('canvas set', Module.canvas);
-});
-#endif
-
 _SOKOL_PRIVATE void _sapp_init_state(const sapp_desc* desc) {
     SOKOL_ASSERT(desc);
     SOKOL_ASSERT(desc->width >= 0);
@@ -3182,10 +3164,6 @@ _SOKOL_PRIVATE void _sapp_init_state(const sapp_desc* desc) {
     _sapp.fullscreen = _sapp.desc.fullscreen;
     _sapp.mouse.shown = true;
     _sapp_timing_init(&_sapp.timing);
-
-    #if EMSCRIPTEN
-    _dk_grab_canvas(_sapp.html5_canvas_selector);
-    #endif
 }
 
 _SOKOL_PRIVATE void _sapp_discard_state(void) {
@@ -5204,23 +5182,11 @@ _SOKOL_PRIVATE uint32_t _sapp_emsc_touch_event_mods(const EmscriptenTouchEvent* 
 _SOKOL_PRIVATE void _sapp_emsc_wgpu_size_changed(void);
 #endif
 
-// DKDEMO: this could be more integrated. Just here to make it easy
-EM_JS(void, _dk_sapp_get_canvas_size, (double* w, double* h), {
-    Module.HEAPF64[w/8] = Module.canvas.offsetWidth;
-    Module.HEAPF64[w/8] = Module.canvas.offsetHeight;
-})
-
-EM_JS(void, _dk_sapp_set_canvas_size, (int w, int h), {
-    Module.canvas.width = w;
-    Module.canvas.height = h;
-})
-
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
     _SOKOL_UNUSED(event_type);
     _SOKOL_UNUSED(user_data);
     double w, h;
-    _dk_sapp_get_canvas_size(&w, &h);
-    // emscripten_get_element_css_size(_sapp.html5_canvas_selector, &w, &h);
+    emscripten_get_element_css_size(_sapp.html5_canvas_selector, &w, &h);
     /* The above method might report zero when toggling HTML5 fullscreen,
        in that case use the window's inner width reported by the
        emscripten event. This works ok when toggling *into* fullscreen
@@ -5259,10 +5225,7 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_size_changed(int event_type, const EmscriptenU
     _sapp.framebuffer_width = (int)roundf(w * _sapp.dpi_scale);
     _sapp.framebuffer_height = (int)roundf(h * _sapp.dpi_scale);
     SOKOL_ASSERT((_sapp.framebuffer_width > 0) && (_sapp.framebuffer_height > 0));
-    
-    // emscripten_set_canvas_element_size(_sapp.html5_canvas_selector, _sapp.framebuffer_width, _sapp.framebuffer_height);
-    _dk_sapp_set_canvas_size(_sapp.framebuffer_width, _sapp.framebuffer_height);
-
+    emscripten_set_canvas_element_size(_sapp.html5_canvas_selector, _sapp.framebuffer_width, _sapp.framebuffer_height);
     #if defined(SOKOL_WGPU)
         // on WebGPU: recreate size-dependent rendering surfaces
         _sapp_emsc_wgpu_size_changed();
@@ -5650,42 +5613,18 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_webgl_context_cb(int emsc_type, const void* re
     return true;
 }
 
-// DKDEMO: I just put this stuff here to make it easy on myself. These should be broken up and put elsewhere
-// this could also be integrated directly into _sapp_emsc_webgl_init, and higer up in init process, even
-
-EM_JS(EMSCRIPTEN_WEBGL_CONTEXT_HANDLE, _dk_setup_context, (bool alpha, bool antialias, bool premultipliedAlpha, bool preserveDrawingBuffer), {
-    // this will be set if you used a selector/id/canvas option in setup
-    if (!Module.canvas) {
-        console.error('Make sure to setup Module.canvas');
-    }
-
-    return GL.createContext(Module.canvas, {
-        depth: true,
-        stencil: true,
-        enableExtensionsByDefault: true,
-        majorVersion: 2,
-        alpha,
-        antialias,
-        premultipliedAlpha,
-        preserveDrawingBuffer
-    });
-})
-
 _SOKOL_PRIVATE void _sapp_emsc_webgl_init(void) {
-    // EmscriptenWebGLContextAttributes attrs;
-    // emscripten_webgl_init_context_attributes(&attrs);
-    // attrs.alpha = _sapp.desc.alpha;
-    // attrs.depth = true;
-    // attrs.stencil = true;
-    // attrs.antialias = _sapp.sample_count > 1;
-    // attrs.premultipliedAlpha = _sapp.desc.html5_premultiplied_alpha;
-    // attrs.preserveDrawingBuffer = _sapp.desc.html5_preserve_drawing_buffer;
-    // attrs.enableExtensionsByDefault = true;
-    // attrs.majorVersion = 2;
-    // EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_create_context(_sapp.html5_canvas_selector, &attrs);
-
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = _dk_setup_context(_sapp.desc.alpha, _sapp.sample_count > 1, _sapp.desc.html5_premultiplied_alpha, _sapp.desc.html5_preserve_drawing_buffer);
-
+    EmscriptenWebGLContextAttributes attrs;
+    emscripten_webgl_init_context_attributes(&attrs);
+    attrs.alpha = _sapp.desc.alpha;
+    attrs.depth = true;
+    attrs.stencil = true;
+    attrs.antialias = _sapp.sample_count > 1;
+    attrs.premultipliedAlpha = _sapp.desc.html5_premultiplied_alpha;
+    attrs.preserveDrawingBuffer = _sapp.desc.html5_preserve_drawing_buffer;
+    attrs.enableExtensionsByDefault = true;
+    attrs.majorVersion = 2;
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_create_context(_sapp.html5_canvas_selector, &attrs);
     // FIXME: error message?
     emscripten_webgl_make_context_current(ctx);
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&_sapp.gl.framebuffer);
