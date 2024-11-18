@@ -19,8 +19,6 @@ export class SokolExample extends HTMLElement {
   async start () {
     // I bind it to my own canvas, which cannot be grabbed with document.querySelector
     this.instance = await setupExample({ canvas: this.canvas })
-    console.log('instance', this.instance)
-    console.log(this.instance.HEAPU8.buffer)
   }
 }
 
